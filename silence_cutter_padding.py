@@ -5,6 +5,7 @@ import tempfile
 import sys
 import os
 import logging
+import re
 
 # ===========================
 # ==== Configure logging ====
@@ -17,7 +18,7 @@ log_handler = logging.FileHandler(log_filename, delay=True)
 logger.addHandler(log_handler)
 
 
-def findSilences(filename, dB = -35):
+def findSilences(filename, dB = -35, padding = 0.025):
   """
     returns a list:
       even elements (0,2,4, ...) denote silence start time
@@ -27,21 +28,14 @@ def findSilences(filename, dB = -35):
   logging.debug(f"findSilences ()")
   logging.debug(f"    - filename = {filename}")
   logging.debug(f"    - dB = {dB}")
+  logging.debug(f"    - padding = {padding}")
 
   command = ["ffmpeg","-i",filename,
              "-af","silencedetect=n=" + str (dB) + "dB:d=1",
              "-f","null","-"]
   output = subprocess.run (command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   s = str(output)
-
-  splitDelimiter = "\\n"
-
-  # for windows encodings: split on \r\n
-  if("\\r\\n" in s):
-    splitDelimiter = "\\r\\n"
-
-  lines = s.split(splitDelimiter)
-
+  lines = s.split("\\n")
   time_list = []
   logging.debug("  lines: ```\n" + "\n".join(lines) + "```\n\n")
 
@@ -51,14 +45,15 @@ def findSilences(filename, dB = -35):
         logging.debug("  words: " + str(words))
         for i in range (len(words)):
             if ("silence_start" in words[i]):
-              time_list.append (float(words[i+1]))
+              clean_time = re.sub(r'[^\d.]+', '', words[i+1])
+              time_list.append (float(clean_time) + padding)
             if "silence_end" in words[i]:
-              time_list.append (float (words[i+1]))
+              clean_time = re.sub(r'[^\d.]+', '', words[i+1])
+              time_list.append (float (clean_time) - padding)
   silence_section_list = list (zip(*[iter(time_list)]*2))
 
   #return silence_section_list
   return time_list
-
 
 
 def getVideoDuration(filename:str) -> float:
@@ -132,14 +127,16 @@ def ffmpeg_run (file, videoFilter, audioFilter, outfile):
   os.remove(audioFilter_file)
 
 
-def cut_silences(infile, outfile, dB = -35):
+
+def cut_silences(infile, outfile, dB = -35, padding = 0.025):
   logging.debug(f"cut_silences ()")
   logging.debug(f"    - infile = {infile}")
   logging.debug(f"    - outfile = {outfile}")
   logging.debug(f"    - dB = {dB}")
+  logging.debug(f"    - padding = {padding}")
 
   print ("detecting silences")
-  silences = findSilences (infile,dB)
+  silences = findSilences (infile,dB,padding)
   duration = getVideoDuration (infile)
   videoSegments = getSectionsOfNewVideo (silences, duration)
 
@@ -151,7 +148,7 @@ def cut_silences(infile, outfile, dB = -35):
 
 def printHelp():
   print ("Usage:")
-  print ("   silence_cutter.py [infile] [optional: outfile] [optional: dB]")
+  print ("   silence_cutter.py [infile] [optional: outfile] [optional: dB] [optional: padding]")
   print ("   ")
   print ("        [outfile]")
   print ("         Default: [infile]_cut")
@@ -165,6 +162,10 @@ def printHelp():
   print ("         -40: Cuts are almost not recognizable.")
   print ("         -50: Cuts are almost not recognizable.")
   print ("              Cuts nothing, if there is background noise.")
+  print ("         ")
+  print ("        [padding]")
+  print ("         Default: 0.025")
+  print ("         How much time to pad around each cut")
   print ("         ")
   print ("")
   print ("Dependencies:")
@@ -192,15 +193,19 @@ def main():
   tmp = os.path.splitext (infile)
   outfile = tmp[0] + "_cut" + tmp[1]
   dB = -30
+  padding = 0.025
 
   if (len(args) >= 2):
     outfile = args[1]
 
   if (len(args) >= 3):
-    dB = args[2]
+    dB = int(args[2])
+
+  if (len(args) >= 4):
+    padding = float(args[3])
 
 
-  cut_silences (infile, outfile, dB)
+  cut_silences (infile, outfile, dB, padding)
 
 
 if __name__ == "__main__":
