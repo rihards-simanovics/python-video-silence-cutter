@@ -112,8 +112,8 @@ def ffmpeg_run (file, videoFilter, audioFilter, outfile):
   logging.debug(f"ffmpeg_run ()")
 
   # prepare filter files
-  vFile = tempfile.NamedTemporaryFile (mode="w", encoding="UTF-8", prefix="silence_video")
-  aFile = tempfile.NamedTemporaryFile (mode="w", encoding="UTF-8", prefix="silence_audio")
+  vFile = tempfile.NamedTemporaryFile (mode="w", encoding="UTF-8", delete=False, prefix="silence_video")
+  aFile = tempfile.NamedTemporaryFile (mode="w", encoding="UTF-8", delete=False, prefix="silence_audio")
 
   videoFilter_file = vFile.name #"/tmp/videoFilter" # TODO: replace with tempfile
   audioFilter_file = aFile.name #"/tmp/audioFilter" # TODO: replace with tempfile
@@ -124,11 +124,12 @@ def ffmpeg_run (file, videoFilter, audioFilter, outfile):
               "-filter_script:v",videoFilter_file,
               "-filter_script:a",audioFilter_file,
               outfile]
-  subprocess.run (command)
+  subprocess.run (command, check=True)
 
   vFile.close()
   aFile.close()
-
+  os.remove(videoFilter_file)
+  os.remove(audioFilter_file)
 
 
 def cut_silences(infile, outfile, dB = -35):
