@@ -11,7 +11,7 @@ GUI to remove silence in videos.
 Download and install them first.
 
 **Windows users**:
-Make sure ffmpeg and ffprobe are in your environment path variables. The links above should have information on how to do that.
+Make sure ffmpeg and ffprobe are in your environment path variables. The links above should have information on how to do that. You can also ask any AI agent to help you with that.
 
 ## How to use
 
