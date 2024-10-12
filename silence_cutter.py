@@ -43,9 +43,9 @@ def findSilences(filename, dB = -35):
         logging.debug("  words: " + str(words))
         for i in range (len(words)):
             if ("silence_start" in words[i]):
-              time_list.append (float(words[i+1]))
+              time_list.append (float(words[i+1].replace("\\r","")))
             if "silence_end" in words[i]:
-              time_list.append (float (words[i+1]))
+              time_list.append (float (words[i+1].replace("\\r","")))
   silence_section_list = list (zip(*[iter(time_list)]*2))
 
   #return silence_section_list
@@ -92,25 +92,36 @@ def getFileContent_audioFilter(videoSectionTimings):
   ret += "', asetpts=N/SR/TB"
   return ret
 
-def writeFile (filename, content):
+def writeFile (file, content):
   logging.debug(f"writeFile ()")
-  logging.debug(f"    - filename = {filename}")
+  logging.debug(f"    - filename = {file.name}")
 
-  with open (filename, "w") as file:
-    file.write (str(content))
+  try:
+    if os.path.exists(file.name):
+      with open(file.name, mode='w', encoding='utf-8') as f:
+        f.write(content)
+    else:
+      print(f"Can't read file: {file.name} ")
+  except PermissionError:
+    print("Permission denied: You don't have the necessary permissions to change the permissions of this file.")
+  except Exception as e:
+    print(f"occur error: {e}")
 
 
 def ffmpeg_run (file, videoFilter, audioFilter, outfile):
   logging.debug(f"ffmpeg_run ()")
 
   # prepare filter files
-  vFile = tempfile.NamedTemporaryFile (mode="w", encoding="UTF-8", prefix="silence_video")
-  aFile = tempfile.NamedTemporaryFile (mode="w", encoding="UTF-8", prefix="silence_audio")
+  vFile = tempfile.NamedTemporaryFile (mode="w", encoding="UTF-8", prefix="silence_video", delete=False)
+  aFile = tempfile.NamedTemporaryFile (mode="w", encoding="UTF-8", prefix="silence_audio", delete=False)
 
+  vFile.close()
+  aFile.close()
   videoFilter_file = vFile.name #"/tmp/videoFilter" # TODO: replace with tempfile
   audioFilter_file = aFile.name #"/tmp/audioFilter" # TODO: replace with tempfile
-  writeFile (videoFilter_file, videoFilter)
-  writeFile (audioFilter_file, audioFilter)
+
+  writeFile (vFile, videoFilter)
+  writeFile (aFile, audioFilter)
 
   command = ["ffmpeg","-i",file,
               "-filter_script:v",videoFilter_file,
