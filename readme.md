@@ -1,42 +1,37 @@
 # A tool for removing silences from a video
 
-**This tool is made to just work!**
-
-However, at the moment, it's a quick-write. Please report bugs, if you found some.
+GUI to remove silence in videos.
 
 ## Dependencies
 
-- python3
-- ffmpeg 
-- ffprobe
+- [python](https://www.python.org/downloads/)
+- [ffmpeg](https://ffmpeg.org/download.html)
+- [ffprobe](https://ffmpeg.org/download.html)
 
-You need to have all of those installed.
+Download and install them first.
 
-**@Windows users**:
-Make sure, that the path to `ffmpeg` and `ffprobe` are inside the "path variable". I.e. you can run both commands from the command line like `C:> ffmpeg`.
+**Windows users**:
+Make sure ffmpeg and ffprobe are in your environment path variables. The links above should have information on how to do that. You can also ask any AI agent to help you with that.
 
 ## How to use
 
-- Easiest command: <br>
-`python3 silence_cutter.py [your video]`
+- Graphical user interface: `python silence_cutter_gui.py`
 
-- Show **help** and suggestions: <br>
-`python3 silence_cutter.py --help`
+## For command-line interface:
 
-- More Options: <br>
-`python3 silence_cutter.py [your video] [outfile] [silence dB border]`
+`python3` is typed in Linux; Windows users should use `python` instead.
+
+- Easiest command: `python3 silence_cutter.py [your video]`
+
+- Show **help** and suggestions: `python3 silence_cutter.py --help`
+
+- More Options: `python3 silence_cutter.py [your video] [outfile] [silence dB border]`
 
 
-## Bugs
-
-File them directly here on Github. I'll try to fix them as soon as possible.
-
-## Comparison to other tools
-As far as my reseach goes, all other tools suck:
-- They don't work
-- They have huge dependencies
-- They have complex dependencies
-- Their dependencies don't work
+## Most other tools are:
+- Unreliable
+- Too complex
+- Huge in size
 - They store each frame of the video as bitmap file<br> (how can you even think about something like that)
 
 
